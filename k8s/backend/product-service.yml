@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: dev
+  labels:
+    app: product-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-app
+  template:
+    metadata:
+      labels:
+        app: product-app
+    spec:
+      containers:
+      - name: product-service
+        image:  product-service:v1   #this also testing purpose, in production we can delete this line and use the latest image from the registry
+        imagePullPolicy: IfNotPresent #this for testing purpose, in production we can delete this line and use the latest image from the registry
+        ports:
+        - containerPort: 3003
+        env:
+        - name: APP_ENV
+          value: "development"
+        - name:  PORT
+          value: "3003"
+        - name: DB_NAME
+          value: "products_db"
+
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: DB_HOST
+
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: DB_PORT
+
+        - name: DB_SSLMODE
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: DB_SSLMODE
+
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rds-secret
+              key: DB_USERNAME
+
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rds-secret
+              key: DB_PASSWORD
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: dev
+  labels:
+    app: product-app
+spec:
+  type: ClusterIP
+  selector:
+    app: product-app
+  ports:
+    - protocol: TCP
+      port: 3003
+      targetPort: 3003

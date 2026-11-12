@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: boutique-postgres
+  namespace: dev
+spec:
+  clusterIP: None #this maken s the service headless, which is required for statefulsets
+  selector:
+    app: postgres
+  ports:
+    - port: 5432

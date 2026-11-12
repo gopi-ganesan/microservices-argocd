@@ -1,0 +1,81 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: dev
+  labels:
+    app: auth-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-app
+  template:
+    metadata:
+      labels:
+        app: auth-app
+    spec:
+      containers:
+        - name: auth-service
+          # Local Kind testing
+          image: auth:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3002
+          env:
+            - name: APP_ENV
+              value: "development"
+            - name: PORT
+              value: "3002"
+            - name: DB_NAME
+              value: "auth_db"
+            - name: DB_HOST
+
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: DB_HOST
+            - name: DB_PORT
+
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: DB_PORT
+            - name: DB_SSLMODE
+
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: DB_SSLMODE
+            - name: DB_USERNAME
+
+              valueFrom:
+                secretKeyRef:
+                  name: rds-secret
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+            
+              valueFrom:
+                secretKeyRef:
+                  name: rds-secret
+                  key: DB_PASSWORD
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: dev
+  labels:
+    app: auth-app
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-app
+  ports:
+    - protocol: TCP
+      port: 3002
+      targetPort: 3002
+  

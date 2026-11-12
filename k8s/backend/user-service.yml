@@ -1,0 +1,80 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-sv-service
+  namespace: dev
+  labels:
+    app: order-sv-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-sv-app
+  template:
+    metadata:
+      labels:
+        app: order-sv-app
+    spec:
+      containers:
+        - name: order-sv-service
+          # Local Kind testing image
+          image: order-service:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3004
+          env:
+            - name: APP_ENV
+              value: "development"
+            - name: PORT
+              value: "3004"
+
+            - name: AUTH_URL
+              value: "http://auth-service:3002"
+            - name: PRODUCTS_URL
+              value: "http://product-service:3003"
+
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: DB_PORT
+            - name: DB_SSLMODE
+              valueFrom:
+                configMapKeyRef:
+                  name: env-config
+                  key: DB_SSLMODE
+
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rds-secret
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rds-secret
+                  key: DB_PASSWORD
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: dev
+  labels:
+    app: user-app
+spec:
+  type: ClusterIP
+  selector:
+    app: user-app
+  ports:
+    - protocol: TCP
+      port: 3006
+      targetPort: 3006
